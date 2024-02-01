@@ -32,10 +32,15 @@ def transcribe_audio(audio_file_path, model_name="base"):
     return result["text"]
 
 
-def flush_session_state():
-    keys = list(st.session_state.keys())
-    for key in keys:
-        st.session_state.pop(key)
+def models_format_func(x):
+    mapping = {
+        "tiny": "32x",
+        "base": "16x",
+        "small": "6x",
+        "medium": "2x",
+        "large": "1x",
+    }
+    return f"{x.upper()} (relative speed: ~{mapping[x]})"
 
 
 st.title("Audio Transcription with Whisper")
@@ -44,8 +49,8 @@ audio_source = st.radio("Select audio source", ("Upload File", "YouTube Link"))
 
 try:
     if audio_source == "Upload File":
-        allowed_file_types = ["mp3", "wav", "flac", "mp4", "m4a", "ogg", "aac", "avi", "mkv"]
-        uploaded_file = st.file_uploader("Choose an audio file", type=allowed_file_types)
+        supported_file_types = ["mp3", "wav", "flac", "mp4", "m4a", "ogg", "aac", "avi", "mkv"]
+        uploaded_file = st.file_uploader("Choose an audio file", type=supported_file_types)
         if uploaded_file is not None and uploaded_file.name != st.session_state.last_processed_file:
             bytes_data = uploaded_file.getvalue()
             st.session_state.audio_file_path = f"temp/{uploaded_file.name}"
@@ -63,10 +68,14 @@ try:
             st.session_state.transcribed = False
 
     if st.session_state.audio_file_path and not st.session_state.transcribed:
+        supported_models = ["tiny", "base", "small", "medium", "large"]
+        model_name = st.selectbox(
+            "Select Model", supported_models, index=1, format_func=models_format_func
+        )
         if st.button("Transcribe"):
             with st.spinner("Transcribing audio..."):
                 st.session_state.transcription = transcribe_audio(
-                    st.session_state.audio_file_path, model_name="base"
+                    st.session_state.audio_file_path, model_name=model_name
                 )
                 st.session_state.transcribed = True
 
@@ -90,5 +99,4 @@ try:
             pass
 except:
     st.error("An error occurred. Please reload page.")
-    flush_session_state()
     st.stop()
