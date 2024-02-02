@@ -100,11 +100,8 @@ try:
                 file_name="transcription.txt",
                 mime="text/plain",
             )
-            try:
-                # cleanup files after transcription
-                shutil.rmtree(TMP_PATH)
-            except:
-                pass
+            # cleanup files after transcription
+            shutil.rmtree(TMP_PATH, ignore_errors=True)
 
     if st.session_state.downloaded:
         # reset app after download
@@ -117,5 +114,5 @@ try:
 
 except:
     st.error("An error occurred. Please reload page.", icon="🚨")
-    shutil.rmtree(TMP_PATH)
+    shutil.rmtree(TMP_PATH, ignore_errors=True)
     st.stop()
