@@ -1,10 +1,11 @@
 import os
+import shutil
 
 import streamlit as st
 import whisper
 from pytube import YouTube
 
-TMP_PATH = "temp"
+TMP_PATH = "tmp"
 SUPPORTED_FILE_TYPES = ["mp3", "wav", "flac", "mp4", "m4a", "ogg", "aac", "avi", "mkv"]
 SUPPORTED_MODELS = ["tiny", "base"]  # "small", "medium", "large"
 
@@ -14,7 +15,7 @@ os.makedirs(TMP_PATH, exist_ok=True)
 def download_youtube_audio(youtube_url):
     yt = YouTube(youtube_url)
     audio_stream = yt.streams.filter(only_audio=True).first()
-    audio_file = audio_stream.download(output_path="temp")
+    audio_file = audio_stream.download(output_path=TMP_PATH)
     return audio_file
 
 
@@ -61,7 +62,7 @@ try:
                 and uploaded_file.name != st.session_state.last_processed_file
             ):
                 bytes_data = uploaded_file.getvalue()
-                st.session_state.audio_file_path = f"temp/{uploaded_file.name}"
+                st.session_state.audio_file_path = f"{TMP_PATH}/{uploaded_file.name}"
                 with open(st.session_state.audio_file_path, "wb") as f:
                     f.write(bytes_data)
                 st.session_state.last_processed_file = uploaded_file.name
@@ -101,7 +102,7 @@ try:
             )
             try:
                 # cleanup files after transcription
-                os.remove(st.session_state.audio_file_path)
+                shutil.rmtree(TMP_PATH)
             except:
                 pass
 
@@ -115,5 +116,6 @@ try:
 
 
 except:
-    st.error("An error occurred. Please reload page.")
+    st.error("An error occurred. Please reload page.", icon="🚨")
+    shutil.rmtree(TMP_PATH)
     st.stop()
